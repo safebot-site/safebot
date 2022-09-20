@@ -9,13 +9,15 @@
 
 
 <h2>Doing</h2>
-- 
+- testing https://badssl.com/ 
 
 Done
 - verificar se o site suporta conexão segura com HTTPS
 - validar SSL
 
 https://us.norton.com/internetsecurity-how-to-how-to-know-if-a-website-is-safe.html 
+https://www.rapyd.net/blog/secure-online-payment-processing/
+https://www.nerdwallet.com/article/credit-cards/ensure-online-credit-card-purchases-safe
 
 ## Como executar
 
