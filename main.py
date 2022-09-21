@@ -1,16 +1,17 @@
 from fastapi import FastAPI
-import requests
+from httpx import AsyncClient
 
 app = FastAPI()
+httpClient = AsyncClient()
 
 # valida se site usa o protocolo HTTPS
 def validate_protocol(site_url: str):
     return site_url.lower().startswith("https")
 
 # valida certificado ssl
-def validate_certificate(site_url: str):
+async def validate_certificate(site_url: str):
     try:
-        response = requests.get(site_url)
+        response = await httpClient.get(site_url)
         return True
     except:
         return False
