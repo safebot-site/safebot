@@ -51,9 +51,6 @@ async def root(site: Site):
         if site.email:
             is_site_secure = await validate_email(site.email)
 
-    if (is_site_secure):
-        is_site_secure = validate_certificate(site_url)
-
-    if (is_site_secure):
-        return {f"certificado válido para o site: {site_url}"}
-    return {f"certificado inválido para o site: {site_url}"}
+    if is_site_secure:
+        return {f"o site {site.url} é seguro"}
+    return {f"o site {site.url} não é seguro"}
