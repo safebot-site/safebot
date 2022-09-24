@@ -1,0 +1,136 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1
+      - uses: actions/checkout@v3
+      # Step 2
+      - name: Set up Python 
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+          architecture: x64
+      # Step 3
+      - name: Install Python Virtual ENV
+        run: pip3 install virtualenv
+      # Step 4
+      - name: Setup Virtual env
+        uses: actions/cache@v3
+        id: cache-venv
+        with:
+          path: venv
+          key: ${{ runner.os }}-venv-${{ hashFiles('**/requirements*.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-venv-
+      # Step 5
+      - name: Activate and Install Depencies into Virtual env
+        run: python -m venv venv && source venv/bin/activate &&
+          pip3 install -r requirements.txt
+        if: steps.cache-venv.outputs.cache-hit != 'true'
+      # Step 6     
+      - name: Activate venv and Run Test        
+        run: . venv/bin/activate && pytest
+      # Step 7
+      - name: Create Zipfile archive of Dependencies
+        run: |
+          cd ./venv/lib/python3.10/site-packages
+          zip -r9 ../../../../api.zip .
+      # Step 8
+      - name: Add App to Zip file
+        run: cd ./app && zip -g ../api.zip -r .
+      # Step 9
+      - name: Upload zip file artifact
+        uses: actions/upload-artifact@v3
+        with:
+          path: api.zip
+          key: safebot
+  
+  cd:
+    runs-on: ubuntu-latest
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+    steps:
+      # Step 1
+      - name: Checkout terraform repository 
+        uses: actions/checkout@v3  
+        repository: 'safebot-site/safebot-terraform'
+      # Step 2
+      - uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.1.7
+      # Step 3
+      - name: Download zip file artifact
+        uses: actions/download-artifact@v3
+        with:
+          path: api.zip
+          key: safebot
+      # Step 4
+      - uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.3.0
+      # Step 5
+      - name: Terraform fmt
+        id: fmt
+        run: terraform fmt -check
+        continue-on-error: true
+      # Step 6
+      - name: Terraform Init
+        id: init
+        run: terraform init
+      # Step 7
+      - name: Terraform Validate
+        id: validate
+        run: terraform validate -no-color
+      # Step 8
+      - name: Terraform Plan
+        id: plan
+        run: terraform plan -no-color
+        continue-on-error: true
+      # Step 9
+      - uses: actions/github-script@v6
+        if: github.event_name == 'pull_request'
+        env:
+          PLAN: "terraform\n${{ steps.plan.outputs.stdout }}"
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const output = `#### Terraform Format and Style 🖌\`${{ steps.fmt.outcome }}\`
+            #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
+            #### Terraform Validation 🤖\`${{ steps.validate.outcome }}\`
+            <details><summary>Validation Output</summary>
+
+            \`\`\`\n
+            ${{ steps.validate.outputs.stdout }}
+            \`\`\`
+
+            </details>
+
+            #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
+
+            <details><summary>Show Plan</summary>
+
+            \`\`\`\n
+            ${process.env.PLAN}
+            \`\`\`
+
+            </details>
+
+            *Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`, Working Directory: \`${{ env.tf_actions_working_dir }}\`, Workflow: \`${{ github.workflow }}\`*`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            })
