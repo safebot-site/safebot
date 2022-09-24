@@ -64,7 +64,8 @@ jobs:
       # Step 1
       - name: Checkout terraform repository 
         uses: actions/checkout@v3  
-        repository: 'safebot-site/safebot-terraform'
+        with:
+          repository: 'safebot-site/safebot-terraform'
       # Step 2
       - uses: hashicorp/setup-terraform@v2
         with:
