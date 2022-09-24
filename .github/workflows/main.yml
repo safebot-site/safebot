@@ -39,15 +39,18 @@ jobs:
       # Step 6     
       - name: Activate venv and Run Test        
         run: . venv/bin/activate && pytest
-      # Step 7
+      # Step 7     
+      - name: Remove zip file       
+        run: rm api.zip -f
+      # Step 8
       - name: Create Zipfile archive of Dependencies
         run: |
           cd ./venv/lib/python3.10/site-packages
           zip -r9 ../../../../api.zip .
-      # Step 8
+      # Step 9
       - name: Add App to Zip file
         run: cd ./src && zip -g ../api.zip -r .
-      # Step 9
+      # Step 10
       - name: Upload zip file artifact
         uses: actions/upload-artifact@v3
         with:
