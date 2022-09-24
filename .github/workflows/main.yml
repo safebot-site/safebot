@@ -2,7 +2,7 @@ name: CI/CD
 
 on:
   push:
-    branches: [ dev ]
+    branches: [ dev, pipepine ]
   pull_request:
     branches: [ dev ]
 
@@ -62,7 +62,7 @@ jobs:
     environment: dev
     runs-on: ubuntu-latest
     needs: [ci]
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/dev'
     env:
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
