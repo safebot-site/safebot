@@ -51,8 +51,8 @@ jobs:
       - name: Upload zip file artifact
         uses: actions/upload-artifact@v3
         with:
-          path: api.zip
-          key: safebot
+          path: .
+          name: api
   
   cd:
     runs-on: ubuntu-latest
@@ -76,8 +76,7 @@ jobs:
       - name: Download zip file artifact
         uses: actions/download-artifact@v3
         with:
-          path: api.zip
-          key: safebot
+          name: api
       # Step 4
       - uses: hashicorp/setup-terraform@v2
         with:
