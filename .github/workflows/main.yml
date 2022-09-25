@@ -137,3 +137,11 @@ jobs:
               repo: context.repo.repo,
               body: output
             })
+      # Step 9
+      - name: Terraform Plan Status
+        if: steps.plan.outcome == 'failure'
+        run: exit 1
+      # Step 10
+      - name: Terraform Apply
+        if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
+        run: terraform apply -auto-approve -input=false
