@@ -1,3 +1,5 @@
+from typing import Union
+
 from fastapi import FastAPI
 from httpx import AsyncClient
 from pydantic import BaseModel
@@ -14,8 +16,8 @@ http_client = AsyncClient()
 
 class Site(BaseModel):
     url: str
-    email: str | None = None
-    cnpj: str | None = None
+    email: Union[str, None] = None
+    cnpj: Union[str, None] = None
 
 # valida se site usa o protocolo HTTPS
 def validate_protocol(site_url: str):
