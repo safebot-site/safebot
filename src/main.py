@@ -3,6 +3,7 @@ from httpx import AsyncClient
 from pydantic import BaseModel
 from mangum import Mangum
 
+import os
 import json
 
 environment = os.environ.get('ENVIRONMENT', None)
