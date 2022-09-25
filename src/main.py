@@ -1,10 +1,14 @@
 from fastapi import FastAPI
 from httpx import AsyncClient
 from pydantic import BaseModel
+from mangum import Mangum
 
 import json
 
-app = FastAPI()
+environment = os.environ.get('ENVIRONMENT', None)
+openapi_prefix = f"/{environment}" if environment else "/"
+
+app = FastAPI(title="Safebot", openapi_prefix=openapi_prefix)
 http_client = AsyncClient()
 
 class Site(BaseModel):
@@ -54,3 +58,5 @@ async def root(site: Site):
     if is_site_secure:
         return {f"o site {site.url} é seguro"}
     return {f"o site {site.url} não é seguro"}
+
+lambda_handler = Mangum(app)
