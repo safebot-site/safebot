@@ -94,9 +94,9 @@ jobs:
         env:
           TF_CLI_ARGS: -backend-config='${{ secrets.PG_BACKEND_URL }}'
       # Step 6
-      - name: Terraform Validate
-        id: validate
-        run: terraform validate -no-color
+      # - name: Terraform Validate
+      #   id: validate
+      #   run: terraform validate -no-color
       # Step 7
       - name: Terraform Plan
         id: plan
