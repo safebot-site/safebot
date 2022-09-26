@@ -94,14 +94,18 @@ jobs:
         env:
           TF_CLI_ARGS: -backend-config='${{ secrets.PG_BACKEND_URL }}'
       # Step 6
-      # - name: Terraform Validate
-      #   id: validate
-      #   run: terraform validate -no-color
+      - name: Terraform Validate
+        id: validate
+        run: terraform validate -no-color
+        env:
+          TF_CLI_ARGS: ""
       # Step 7
       - name: Terraform Plan
         id: plan
         run: terraform plan -no-color
         continue-on-error: true
+        env:
+          TF_CLI_ARGS: ""
       # Step 8
       - uses: actions/github-script@v6
         if: github.event_name == 'pull_request'
@@ -148,4 +152,4 @@ jobs:
         if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
         run: terraform apply -auto-approve -input=false
         env:
-          TF_CLI_ARGS: -backend-config='${{ secrets.PG_BACKEND_URL }}'
+          TF_CLI_ARGS: ""
