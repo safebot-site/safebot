@@ -92,7 +92,7 @@ jobs:
         id: init
         run: terraform init
         env:
-          TF_CLI_ARGS: -backend-config='${{ secrets.PG_BACKEND_URL }}'
+          TF_CLI_ARGS: ${{ secrets.PG_BACKEND_URL }}
       # Step 6
       - name: Terraform Validate
         id: validate
