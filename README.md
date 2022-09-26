@@ -40,7 +40,7 @@ pip install -r requirements.txt
 4. Executar aplicação web
 
 ```
-uvicorn main:app --reload
+uvicorn src.main:app --reload
 ``
 
 test on: **https://127.0.0.1:8000/verify/google.com

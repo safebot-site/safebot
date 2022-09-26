@@ -7,6 +7,7 @@ from mangum import Mangum
 
 import os
 import json
+import re
 
 environment = os.environ.get('ENVIRONMENT', None)
 openapi_prefix = f"/{environment}" if environment else "/"
@@ -46,6 +47,16 @@ async def validate_email(email: str):
         return False
     return True
 
+# validar o CNPJ do dono do site com o CNPJ da empresa 
+
+async def validate_cnpj(site_url, site_cnpj):
+    domain_url=site_url[7:]
+    response = await http_client.get(f"https://rdap.registro.br/domain/{domain_url}")
+    response_data = json.loads(response.text)["entities"["publicIds"["identifier"]]] 
+    print(response_data)
+    cnpj_numeros = re.sub('[^0-9]', '', response_data)
+    return site_cnpj==cnpj_numeros
+
 @app.post("/verify")
 async def root(site: Site):
 
@@ -57,7 +68,11 @@ async def root(site: Site):
     if is_site_secure:
         if site.email:
             is_site_secure = await validate_email(site.email)
-
+   
+    if is_site_secure:
+        if site.cnpj:
+            is_site_secure = await validate_cnpj(site.url, site.cnpj)
+    
     if is_site_secure:
         return {f"o site {site.url} é seguro"}
     return {f"o site {site.url} não é seguro"}
