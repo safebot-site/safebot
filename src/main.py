@@ -48,14 +48,12 @@ async def validate_email(email: str):
     return True
 
 # validar o CNPJ do dono do site com o CNPJ da empresa 
-
 async def validate_cnpj(site_url, site_cnpj):
-    domain_url=site_url[7:]
+    domain_url = site_url[7:]
     response = await http_client.get(f"https://rdap.registro.br/domain/{domain_url}")
-    response_data = json.loads(response.text)["entities"["publicIds"["identifier"]]] 
-    print(response_data)
-    cnpj_numeros = re.sub('[^0-9]', '', response_data)
-    return site_cnpj==cnpj_numeros
+    cnpj = response.json()["entities"][0]["handle"]
+
+    return site_cnpj==cnpj
 
 @app.post("/verify")
 async def root(site: Site):
