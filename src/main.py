@@ -10,9 +10,9 @@ import json
 import re
 
 environment = os.environ.get('ENVIRONMENT', None)
-openapi_prefix = f"/{environment}" if environment else "/"
+base_path = f"/{environment}" if environment else "/"
 
-app = FastAPI(title="Safebot", openapi_prefix=openapi_prefix)
+app = FastAPI(title="Safebot", openapi_prefix=base_path)
 http_client = AsyncClient()
 
 class Site(BaseModel):
@@ -126,4 +126,4 @@ async def root(site: Site):
         return {f"o site {site.url} é seguro"}
     return {f"o site {site.url} não é seguro"}
 
-lambda_handler = Mangum(app)
+lambda_handler = Mangum(app, api_gateway_base_path=base_path)
