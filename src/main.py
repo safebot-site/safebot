@@ -206,14 +206,15 @@ async def verify_site_url(site_url: str, request: Request, response: Response):
 
 @app.on_event("startup")
 async def startup():
-    r = aioredis.from_url(REDIS_CACHE_URL, encoding="utf8",
+    redis_url = os.environ.get('REDIS_CACHE_URL', None)
+    r = aioredis.from_url(redis_url, encoding="utf8",
                           decode_responses=False)
     FastAPICache.init(RedisBackend(r), prefix="fastapi-cache")
 
     # You can set the Redis OM URL using the REDIS_OM_URL environment
     # variable, or by manually creating the connection using your model's
     # Meta object.
-    SiteModel.Meta.database = get_redis_connection(url=REDIS_CACHE_URL,
+    SiteModel.Meta.database = get_redis_connection(url=redis_url,
                                                   decode_responses=False)
     await Migrator().run()
 
