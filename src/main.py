@@ -198,11 +198,13 @@ async def verify_site(site: Site):
 async def verify_site_url(site_url: str, request: Request, response: Response):
     try:
         # normalize_url
-        site_url = site_url[8:]
-        site_model = await SiteModel.find(SiteModel.url == site_url).first()
+        normalized_site_url = site_url[8:]
+        # fazer busca em banco de dados relacional
+        site_model = await SiteModel.find(SiteModel.url == normalized_site_url).first()
         return {}
     except NotFoundError:
-        raise HTTPException(status_code=404, detail="Site not found")
+        site = Site(url=site_url)
+        return await verify_site(site)
 
 @app.on_event("startup")
 async def startup():
