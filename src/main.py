@@ -169,40 +169,37 @@ async def update_cache(site_url: str, is_secure: bool):
         site_model = SiteModel(url=site_url, is_secure=str(is_secure))
         await site_model.save()
 
-@app.post("/verify")
-async def verify_site(site: Site):
-
-    is_site_secure = validate_protocol(site.url)
-
-    if is_site_secure:
-        is_site_secure = await validate_certificate(site.url)
+@app.get("/verify/{site_url:path}")
+@cache(expire=7200)
+async def verify_site_url(site_url: str, email: str, cnpj: str, request: Request, response: Response):
+    is_site_secure = validate_protocol(site_url)
 
     if is_site_secure:
-        if site.email:
-            is_site_secure = await validate_email(site.email)
+        is_site_secure = await validate_certificate(site_url)
+
+    if is_site_secure:
+        if email:
+            is_site_secure = await validate_email(email)
    
     if is_site_secure:
-        if site.cnpj:
-            is_site_secure = await validate_cnpj(site.url, site.cnpj)
+        if cnpj:
+            is_site_secure = await validate_cnpj(site_url, cnpj)
     
     if is_site_secure:
-        is_site_secure = await validate_reclame_aqui(site.url)
+        is_site_secure = await validate_reclame_aqui(site_url)
 
-    await update_cache(site.url, is_site_secure)
+    #await update_cache(site_url, is_site_secure)
     if is_site_secure:
         return {}
     raise HTTPException(status_code=422, detail="Site inseguro")
 
-@app.get("/verify/{site_url:path}")
-@cache(expire=7200)
-async def verify_site_url(site_url: str, request: Request, response: Response):
-    try:
-        # normalize_url
-        site_url = site_url[8:]
-        site_model = await SiteModel.find(SiteModel.url == site_url).first()
-        return {}
-    except NotFoundError:
-        raise HTTPException(status_code=404, detail="Site not found")
+    # try:
+    #     # normalize_url
+    #     site_url = site_url[8:]
+    #     site_model = await SiteModel.find(SiteModel.url == site_url).first()
+    #     return {}
+    # except NotFoundError:
+    #     raise HTTPException(status_code=404, detail="Site not found")
 
 @app.on_event("startup")
 async def startup():
