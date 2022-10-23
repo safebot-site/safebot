@@ -1,4 +1,4 @@
-from src.main import calculate_cnpj_matriz
+from safebot.validations.validate import calculate_cnpj_matriz
 
 # verifica se dado um CNPJ matriz o mesmo CNPJ matriz é retornado
 def test_cnpj_matriz():

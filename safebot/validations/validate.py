@@ -1,52 +1,9 @@
-from typing import Union
-
-from fastapi import FastAPI, HTTPException
 from httpx import AsyncClient
-from pydantic import BaseModel
-from mangum import Mangum
-
 from bs4 import BeautifulSoup
 
-from starlette.requests import Request
-from starlette.responses import Response
-
-from fastapi_cache import FastAPICache
-from fastapi_cache.backends.redis import RedisBackend
-from fastapi_cache.decorator import cache
-
-import aioredis
-
-from aredis_om import (
-    Field,
-    HashModel,
-    Migrator,
-    NotFoundError,
-)
-
-from aredis_om import get_redis_connection
-
-from pydantic import HttpUrl, EmailStr
-
-import os
 import json
-import re
 
-
-environment = os.environ.get('ENVIRONMENT', None)
-base_path = f"/{environment}" if environment else "/"
-
-app = FastAPI(title="Safebot", openapi_prefix=base_path)
 http_client = AsyncClient()
-
-
-class Site(BaseModel):
-    url: str
-    email: Union[EmailStr, None] = None
-    cnpj: Union[str, None] = None
-
-class SiteModel(HashModel):
-    url: str = Field(index=True)
-    is_secure: str
 
 # valida se site usa o protocolo HTTPS
 def validate_protocol(site_url: str):
@@ -156,67 +113,3 @@ async def validate_reclame_aqui(site_url):
     score = float(soup.find_all("span", class_="score")[0].b.extract().get_text())
 
     return score >= 6
-
-async def update_cache(site_url: str, is_secure: bool):
-    site_url = site_url[8:]
-    try:
-        site_model = await SiteModel.find(SiteModel.url == site_url).first()
-        site_model.url = site_url
-        site_model.is_secure = str(is_secure)
-
-        await site_model.update()
-    except NotFoundError:
-        site_model = SiteModel(url=site_url, is_secure=str(is_secure))
-        await site_model.save()
-
-@app.get("/verify/{site_url:path}")
-@cache(expire=7200)
-async def verify_site_url(site_url: str, email: str, cnpj: str, request: Request, response: Response):
-    is_site_secure = validate_protocol(site_url)
-
-    if is_site_secure:
-        is_site_secure = await validate_certificate(site_url)
-
-    if is_site_secure:
-        if email:
-            is_site_secure = await validate_email(email)
-   
-    if is_site_secure:
-        if cnpj:
-            is_site_secure = await validate_cnpj(site_url, cnpj)
-    
-    if is_site_secure:
-        is_site_secure = await validate_reclame_aqui(site_url)
-
-    #await update_cache(site_url, is_site_secure)
-    if is_site_secure:
-        return {}
-    raise HTTPException(status_code=422, detail="Site inseguro")
-
-    # try:
-    #     # normalize_url
-    #     site_url = site_url[8:]
-    #     site_model = await SiteModel.find(SiteModel.url == site_url).first()
-    #     return {}
-    # except NotFoundError:
-    #     raise HTTPException(status_code=404, detail="Site not found")
-
-@app.on_event("startup")
-async def startup():
-    redis_url = os.environ.get('REDIS_CACHE_URL', None)
-    r = aioredis.from_url(redis_url, encoding="utf8",
-                          decode_responses=False)
-    FastAPICache.init(RedisBackend(r), prefix="fastapi-cache")
-
-    # You can set the Redis OM URL using the REDIS_OM_URL environment
-    # variable, or by manually creating the connection using your model's
-    # Meta object.
-    SiteModel.Meta.database = get_redis_connection(url=redis_url,
-                                                  decode_responses=False)
-    await Migrator().run()
-
-lambda_handler = Mangum(app, api_gateway_base_path=base_path)
-
-#https://github.com/redis/redis-om-python/blob/main/docs/fastapi_integration.md
-
-#https://app.redislabs.com/#/login
