@@ -4,7 +4,6 @@ from mangum import Mangum
 from fastapi_cache import FastAPICache
 from fastapi_cache.backends.redis import RedisBackend
 
-import os
 import aioredis
 
 from aredis_om import (
@@ -14,10 +13,6 @@ from aredis_om import (
 
 from safebot.models.site import SiteModel
 from safebot.routers.verify import verify_router
-
-
-environment = os.environ.get('ENVIRONMENT', None)
-base_path = f"/{environment}" if environment else "/"
 
 app = FastAPI(title="Safebot", root_path=base_path)
 app.include_router(verify_router, prefix="")
@@ -35,7 +30,7 @@ async def startup():
     SiteModel.Meta.database = get_redis_connection(url=redis_url, decode_responses=True)
     await Migrator().run()
 
-lambda_handler = Mangum(app, api_gateway_base_path=base_path)
+lambda_handler = Mangum(app)
 
 #https://github.com/redis/redis-om-python/blob/main/docs/fastapi_integration.md
 
