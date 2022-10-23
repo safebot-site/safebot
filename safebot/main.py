@@ -4,6 +4,7 @@ from mangum import Mangum
 from fastapi_cache import FastAPICache
 from fastapi_cache.backends.redis import RedisBackend
 
+import os
 import aioredis
 
 from aredis_om import (
@@ -14,7 +15,7 @@ from aredis_om import (
 from safebot.models.site import SiteModel
 from safebot.routers.verify import verify_router
 
-app = FastAPI(title="Safebot", root_path=base_path)
+app = FastAPI(title="Safebot")
 app.include_router(verify_router, prefix="")
 
 
